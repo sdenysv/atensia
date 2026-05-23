@@ -196,6 +196,9 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          echo "DEBUG: PROFILE_NAME='${PROFILE_NAME}'"
+          echo "DEBUG: WIDGET_PROFILE_NAME='${WIDGET_PROFILE_NAME}'"
+
           # Common identity / style changes + main-app profile specifier
           sed -i '' \
             -e 's/"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = "iPhone Developer";/"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";/g' \
@@ -209,6 +212,10 @@ jobs:
           python3 .github/scripts/patch_widget_signing.py \
             ios/Runner.xcodeproj/project.pbxproj \
             "${WIDGET_PROFILE_NAME}"
+
+          echo "DEBUG: pbxproj widget signing result:"
+          grep -A2 "com\.texapp\.atensia\.AtensiaWidget" ios/Runner.xcodeproj/project.pbxproj \
+            | grep -E "BUNDLE_IDENTIFIER|PROVISIONING_PROFILE|CODE_SIGN_STYLE"
           echo "Xcode project patched for manual signing."
 
       - name: Build IPA
