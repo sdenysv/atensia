@@ -155,6 +155,95 @@ struct MoodSelectorRow: View {
     }
 }
 
+// MARK: - Lock screen views
+
+struct AccessoryCircularView: View {
+    let entry: MoodEntry
+
+    private var symbol: String {
+        guard let v = entry.valence else { return "sun.min" }
+        if v <= -0.34 { return "cloud.drizzle" }
+        if v >=  0.34 { return "sun.max" }
+        return "sun.min"
+    }
+
+    var body: some View {
+        ZStack {
+            Image(systemName: symbol)
+                .font(.system(size: 26))
+                .opacity(entry.valence == nil ? 0.35 : 1)
+                .widgetAccentable()
+        }
+        .containerBackground(.fill.tertiary, for: .widget)
+    }
+}
+
+struct AccessoryRectangularView: View {
+    let entry: MoodEntry
+
+    private func label(_ value: Double?, _ options: [String]) -> String {
+        guard let v = value else { return "—" }
+        if v <= -0.34 { return options[0] }
+        if v >=  0.34 { return options[2] }
+        return options[1]
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            LockScreenRow(
+                symbol:  "face.smiling",
+                caption: "НАСТРІЙ",
+                value:   label(entry.valence, ["Погано", "Нормально", "Чудово"])
+            )
+            LockScreenRow(
+                symbol:  "bolt",
+                caption: "ЕНЕРГІЯ",
+                value:   label(entry.arousal, ["Виснажено", "Нормально", "Бадьоро"])
+            )
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .containerBackground(.fill.tertiary, for: .widget)
+    }
+}
+
+struct LockScreenRow: View {
+    let symbol:  String
+    let caption: String
+    let value:   String
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: symbol)
+                .font(.system(size: 11, weight: .semibold))
+                .widgetAccentable()
+                .frame(width: 14)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(caption)
+                    .font(.system(size: 7, weight: .bold))
+                    .kerning(0.8)
+                    .opacity(0.55)
+                Text(value)
+                    .font(.system(size: 13, weight: .semibold))
+            }
+        }
+    }
+}
+
+// MARK: - Entry router
+
+struct MoodWidgetEntryView: View {
+    @Environment(\.widgetFamily) var family
+    let entry: MoodEntry
+
+    var body: some View {
+        switch family {
+        case .accessoryCircular:    AccessoryCircularView(entry: entry)
+        case .accessoryRectangular: AccessoryRectangularView(entry: entry)
+        default:                    MoodWidgetView(entry: entry)
+        }
+    }
+}
+
 // MARK: - Widget
 
 struct MoodWidget: Widget {
@@ -162,11 +251,11 @@ struct MoodWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: MoodProvider()) { entry in
-            MoodWidgetView(entry: entry)
+            MoodWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("Настрій")
         .description("Відстежуй настрій та енергію.")
-        .supportedFamilies([.systemMedium])
+        .supportedFamilies([.systemMedium, .accessoryCircular, .accessoryRectangular])
         .contentMarginsDisabled()
     }
 }
