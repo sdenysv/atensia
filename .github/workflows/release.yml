@@ -231,6 +231,8 @@ jobs:
               <dict>
                   <key>com.texapp.atensia</key>
                   <string>${PROFILE_NAME}</string>
+                  <key>com.texapp.atensia.AtensiaWidget</key>
+                  <string>${WIDGET_PROFILE_NAME}</string>
               </dict>
               <key>stripSwiftSymbols</key>
               <true/>
