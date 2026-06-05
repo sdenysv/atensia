@@ -47,6 +47,9 @@ void main() async {
 
   // Load persisted data, then initialize notifications — both in the background.
   unawaited(_initAppData(appProvider));
+
+  // Sync widget → app whenever the app returns to the foreground.
+  WidgetsBinding.instance.addObserver(_WidgetSyncObserver(appProvider));
 }
 
 /// Loads persisted data and initializes the notification plugin concurrently.
@@ -78,6 +81,25 @@ Future<void> _initNotificationPlugin() async {
     await NotificationService.instance.init();
   } catch (e) {
     debugPrint('NotificationService: init failed on startup ($e).');
+  }
+}
+
+class _WidgetSyncObserver extends WidgetsBindingObserver {
+  final AppProvider _provider;
+  AppLifecycleState? _prev;
+  _WidgetSyncObserver(this._provider);
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Kick off the sync at `inactive` (paused→inactive→resumed) so the channel
+    // call is in-flight before the UI is live.  Also sync at `resumed` as a
+    // guaranteed fallback in case the channel wasn't ready during `inactive`.
+    if (state == AppLifecycleState.resumed ||
+        (state == AppLifecycleState.inactive &&
+            _prev == AppLifecycleState.paused)) {
+      _provider.syncFromWidget();
+    }
+    _prev = state;
   }
 }
 

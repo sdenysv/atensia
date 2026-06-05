@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # build-local-apk.sh
 # Builds a dev APK locally and uploads it to the latest-dev GitHub Release
-# so it appears on https://skvortsovden.github.io/atensia/builds/index.html
+# so it appears on https://sdenysv.github.io/atensia/builds/index.html
 #
 # Prerequisites: flutter, gh (GitHub CLI, authenticated)
 #
@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-REPO="skvortsovden/atensia"
+REPO="sdenysv/atensia"
 RELEASE_TAG="latest-dev"
 
 # ── 1. Resolve version from pubspec.yaml ──────────────────────────────────────
@@ -96,5 +96,5 @@ gh release upload "$RELEASE_TAG" "$ALIAS_NAME" \
 rm -f "$APK_NAME" "$ALIAS_NAME"
 
 echo ""
-echo "✅  Done! Visit https://skvortsovden.github.io/atensia/builds/index.html"
+echo "✅  Done! Visit https://sdenysv.github.io/atensia/builds/index.html"
 echo "    (may take ~30 s for the page to refresh from the Releases API)"

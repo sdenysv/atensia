@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/strings.dart';
 import '../models/daily_entry.dart';
 import '../services/notification_service.dart';
+import '../services/widget_bridge.dart';
 
 class AppProvider extends ChangeNotifier {
   Map<String, DailyEntry> _entries = {};
@@ -129,6 +130,23 @@ class AppProvider extends ChangeNotifier {
       _isInitialized = true;
       notifyListeners();
     }
+    await _applyWidgetMoodIfNewer();
+  }
+
+  Future<void> syncFromWidget() => _applyWidgetMoodIfNewer();
+
+  Future<void> _applyWidgetMoodIfNewer() async {
+    final widgetMood = await WidgetBridge.readWidgetMood();
+    if (widgetMood == null) return;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final entry = getOrCreateEntry(today);
+    // Only overwrite a dimension if the widget actually has a value for it.
+    final newValence = widgetMood.valence ?? entry.valence;
+    final newArousal = widgetMood.arousal ?? entry.arousal;
+    if (entry.valence != newValence || entry.arousal != newArousal) {
+      _saveEntry(entry.copyWith(valence: newValence, arousal: newArousal));
+    }
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -159,7 +177,19 @@ class AppProvider extends ChangeNotifier {
       _entries[key] = entry;
     }
     _persistEntries();
+    _syncWidgetForToday(entry);
     notifyListeners();
+  }
+
+  void _syncWidgetForToday(DailyEntry entry) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (entry.date == today) {
+      WidgetBridge.updateTodayMood(
+        valence: entry.valence,
+        arousal: entry.arousal,
+      );
+    }
   }
 
   void toggleHabit(DateTime date, String habit) {
